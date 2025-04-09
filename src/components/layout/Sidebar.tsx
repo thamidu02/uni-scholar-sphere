@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { 
   BookOpen, 
   Calculator, 
-  Flask, 
+  Flasks, 
   Globe, 
   BookMarked, 
   Binary, 
@@ -40,7 +40,7 @@ const departments: Department[] = [
   },
   {
     name: "Chemistry",
-    icon: <Flask className="h-5 w-5" />,
+    icon: <Flasks className="h-5 w-5" />,
     href: "/department/chemistry",
   },
   {
