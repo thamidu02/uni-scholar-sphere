@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUp, ArrowDown, MessageSquare } from "lucide-react";
+import { ArrowUp, ArrowDown, MessageSquare, CheckCircle, Check } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 // Dummy post data (in a real app, this would come from an API)
@@ -33,6 +33,7 @@ const dummyPost = {
         "I'd recommend checking out the Algorithm Design Manual by Skiena as a supplementary text. For online resources, MIT's OpenCourseWare has excellent materials on advanced algorithms.",
       votes: 12,
       createdAt: "2023-04-06T16:15:00Z",
+      isBestAnswer: false,
     },
     {
       id: "comment2",
@@ -44,6 +45,7 @@ const dummyPost = {
         "For graph algorithms specifically, I found the Stanford course on Coursera really helpful. It goes deeper into network flow problems and matching algorithms than our textbook does.",
       votes: 8,
       createdAt: "2023-04-06T17:30:00Z",
+      isBestAnswer: true,
     },
     {
       id: "comment3",
@@ -55,6 +57,7 @@ const dummyPost = {
         "Have you tried the competitive programming problems on Codeforces or LeetCode? They have a good collection of algorithm challenges that really test your understanding. I found them particularly useful for dynamic programming practice.",
       votes: 6,
       createdAt: "2023-04-07T09:45:00Z",
+      isBestAnswer: false,
     },
   ],
   createdAt: "2023-04-06T15:00:00Z",
@@ -74,7 +77,10 @@ const formatDate = (dateString: string) => {
 
 const PostDetail = () => {
   const { postId } = useParams<{ postId: string }>();
-  // In a real app, fetch the post data based on postId
+  const [comments, setComments] = useState(dummyPost.comments);
+  
+  // In a real app, check if current user is the post author
+  const isPostAuthor = true; // Mock - in real app, compare current user ID with post author ID
 
   // Get initials for avatar fallback
   const getInitials = (name: string) => {
@@ -84,6 +90,22 @@ const PostDetail = () => {
       .join("")
       .toUpperCase();
   };
+
+  const handleMarkBestAnswer = (commentId: string) => {
+    setComments(prevComments => 
+      prevComments.map(comment => ({
+        ...comment,
+        isBestAnswer: comment.id === commentId ? !comment.isBestAnswer : false
+      }))
+    );
+  };
+
+  // Sort comments to show best answer first
+  const sortedComments = [...comments].sort((a, b) => {
+    if (a.isBestAnswer && !b.isBestAnswer) return -1;
+    if (!a.isBestAnswer && b.isBestAnswer) return 1;
+    return 0;
+  });
 
   return (
     <Layout>
@@ -162,8 +184,16 @@ const PostDetail = () => {
           </div>
 
           <div className="space-y-4">
-            {dummyPost.comments.map((comment) => (
-              <Card key={comment.id} className="overflow-hidden">
+            {sortedComments.map((comment) => (
+              <Card key={comment.id} className={`overflow-hidden ${comment.isBestAnswer ? 'ring-2 ring-green-200 bg-green-50/30' : ''}`}>
+                {comment.isBestAnswer && (
+                  <div className="bg-green-100 px-4 py-2 border-b border-green-200">
+                    <div className="flex items-center gap-2 text-green-800">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">Best Answer</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex">
                   <div className="w-12 bg-gray-50 flex flex-col items-center py-4">
                     <button className="upvote-button text-gray-500 hover:text-academic-blue">
@@ -178,22 +208,36 @@ const PostDetail = () => {
                   </div>
 
                   <CardContent className="flex-1 p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback>
-                          {getInitials(comment.author.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <Link
-                        to={`/user/${comment.author.id}`}
-                        className="font-medium text-academic-navy hover:underline"
-                      >
-                        {comment.author.name}
-                      </Link>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-sm text-gray-500">
-                        {formatDate(comment.createdAt)}
-                      </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback>
+                            {getInitials(comment.author.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <Link
+                          to={`/user/${comment.author.id}`}
+                          className="font-medium text-academic-navy hover:underline"
+                        >
+                          {comment.author.name}
+                        </Link>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-sm text-gray-500">
+                          {formatDate(comment.createdAt)}
+                        </span>
+                      </div>
+                      
+                      {isPostAuthor && (
+                        <Button
+                          variant={comment.isBestAnswer ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleMarkBestAnswer(comment.id)}
+                          className={`text-xs ${comment.isBestAnswer ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-green-50 hover:text-green-700 hover:border-green-300'}`}
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          {comment.isBestAnswer ? 'Best Answer' : 'Mark as Best'}
+                        </Button>
+                      )}
                     </div>
                     <p className="text-gray-700">{comment.content}</p>
                   </CardContent>
